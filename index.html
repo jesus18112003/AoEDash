@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AOE2 Companion Stats</title>
+    <style>
+        :root {
+            --primary: #4a6fa5;
+            --secondary: #166088;
+            --accent: #4fc3f7;
+            --background: #f8f9fa;
+            --card-bg: #ffffff;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: var(--background);
+            margin: 0;
+            padding: 2rem;
+            color: #333;
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 2.5rem;
+        }
+        
+        h1 {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .subtitle {
+            color: #666;
+            font-weight: 300;
+        }
+        
+        .stats-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 1.5rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .player-card {
+            background: var(--card-bg);
+            border-radius: 10px;
+            padding: 1.5rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            border-left: 4px solid var(--accent);
+        }
+        
+        .player-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+        }
+        
+        .player-name {
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: var(--secondary);
+        }
+        
+        .stat-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.8rem;
+            padding-bottom: 0.8rem;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .stat-label {
+            font-weight: 500;
+            color: #666;
+        }
+        
+        .stat-value {
+            font-weight: 600;
+        }
+        
+        .elo {
+            color: var(--primary);
+        }
+        
+        .ranking {
+            color: #e91e63;
+        }
+        
+        .winrate {
+            color: #4caf50;
+        }
+        
+        .loading {
+            text-align: center;
+            font-size: 1.2rem;
+            color: #666;
+            padding: 2rem;
+        }
+        
+        @media (max-width: 768px) {
+            .stats-container {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>AOE2 Player Statistics</h1>
+        <p class="subtitle">Top player rankings and performance metrics</p>
+    </header>
+    
+    <div id="stats-container" class="stats-container">
+        <!-- Data will be loaded here -->
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const container = document.getElementById('stats-container');
+            
+            // Show loading state
+            container.innerHTML = '<div class="loading">Loading player data...</div>';
+            
+            fetch('/estadisticas')
+                .then(response => response.json())
+                .then(data => {
+                    // Sort by ELO (descending)
+                    data.sort((a, b) => b.elo - a.elo);
+                    
+                    container.innerHTML = '';
+                    
+                    data.forEach(player => {
+                        const card = document.createElement('div');
+                        card.className = 'player-card';
+                        
+                        card.innerHTML = `
+                            <div class="player-name">${player.nombre}</div>
+                            <div class="stat-row">
+                                <span class="stat-label">ELO Rating</span>
+                                <span class="stat-value elo">${player.elo}</span>
+                            </div>
+                            <div class="stat-row">
+                                <span class="stat-label">Global Rank</span>
+                                <span class="stat-value ranking">${player.ranking || 'N/A'}</span>
+                            </div>
+                            <div class="stat-row">
+                                <span class="stat-label">Win Rate</span>
+                                <span class="stat-value winrate">${player.winrate}%</span>
+                            </div>
+                        `;
+                        
+                        container.appendChild(card);
+                    });
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    container.innerHTML = '<div class="loading">Error loading data. Please try again later.</div>';
+                });
+        });
+    </script>
+</body>
+</html>
