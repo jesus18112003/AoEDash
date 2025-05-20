@@ -110,6 +110,33 @@
                 grid-template-columns: 1fr;
             }
         }
+
+        /* Loading Skeleton */
+.loading-skeleton {
+  width: 100%;
+}
+.skeleton-card {
+  height: 100px;
+  background: #f0f0f0;
+  border-radius: 8px;
+  margin-bottom: 1rem;
+  animation: pulse 1.5s infinite ease-in-out;
+}
+
+/* Error State */
+.error {
+  text-align: center;
+  padding: 2rem;
+  color: #d32f2f;
+  background: #ffebee;
+  border-radius: 8px;
+}
+
+@keyframes pulse {
+  0% { opacity: 0.6; }
+  50% { opacity: 0.3; }
+  100% { opacity: 0.6; }
+}
     </style>
 </head>
 <body>
@@ -124,47 +151,65 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            const container = document.getElementById('stats-container');
-            
-            // Show loading state
-            container.innerHTML = '<div class="loading">Loading player data...</div>';
-            
-            fetch('https://aoedash.onrender.com')
-                .then(response => response.json())
-                .then(data => {
-                    // Sort by ELO (descending)
-                    data.sort((a, b) => b.elo - a.elo);
-                    
-                    container.innerHTML = '';
-                    
-                    data.forEach(player => {
-                        const card = document.createElement('div');
-                        card.className = 'player-card';
-                        
-                        card.innerHTML = `
-                            <div class="player-name">${player.nombre}</div>
-                            <div class="stat-row">
-                                <span class="stat-label">ELO Rating</span>
-                                <span class="stat-value elo">${player.elo}</span>
-                            </div>
-                            <div class="stat-row">
-                                <span class="stat-label">Global Rank</span>
-                                <span class="stat-value ranking">${player.ranking || 'N/A'}</span>
-                            </div>
-                            <div class="stat-row">
-                                <span class="stat-label">Win Rate</span>
-                                <span class="stat-value winrate">${player.winrate}%</span>
-                            </div>
-                        `;
-                        
-                        container.appendChild(card);
-                    });
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    container.innerHTML = '<div class="loading">Error loading data. Please try again later.</div>';
-                });
-        });
+  const container = document.getElementById('stats-container');
+  
+  // Mejor visualización de carga
+  container.innerHTML = `
+    <div class="loading-skeleton">
+      <div class="skeleton-card"></div>
+      <div class="skeleton-card"></div>
+      <div class="skeleton-card"></div>
+    </div>
+  `;
+  
+  fetch('https://aoedash.onrender.com/estadisticas', {
+    headers: {
+      'Accept': 'application/json'
+    }
+  })
+    .then(response => {
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      return response.json();
+    })
+    .then(data => {
+      container.innerHTML = '';
+      
+      // Ordenar por ELO (mayor a menor)
+      data.sort((a, b) => b.elo - a.elo);
+      
+      data.forEach(player => {
+        const card = document.createElement('div');
+        card.className = 'player-card';
+        card.innerHTML = `
+          <div class="player-name">${player.nombre}</div>
+          <div class="stat-row">
+            <span class="stat-label">ELO Rating</span>
+            <span class="stat-value elo">${player.elo}</span>
+          </div>
+          <div class="stat-row">
+            <span class="stat-label">Global Rank</span>
+            <span class="stat-value ranking">${player.ranking || 'N/A'}</span>
+          </div>
+          <div class="stat-row">
+            <span class="stat-label">Win Rate</span>
+            <span class="stat-value winrate">${player.winrate || '0'}%</span>
+          </div>
+        `;
+        container.appendChild(card);
+      });
+    })
+    .catch(error => {
+      console.error('Fetch error:', error);
+      container.innerHTML = `
+        <div class="error">
+          <p>⚠️ Failed to load player data</p>
+          <small>${error.message || 'The server may be down. Try refreshing.'}</small>
+        </div>
+      `;
+    });
+});
     </script>
 </body>
 </html>
