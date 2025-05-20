@@ -129,7 +129,7 @@
             // Show loading state
             container.innerHTML = '<div class="loading">Loading player data...</div>';
             
-            fetch('/estadisticas')
+            fetch('https://aoedash.onrender.com')
                 .then(response => response.json())
                 .then(data => {
                     // Sort by ELO (descending)
