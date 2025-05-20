@@ -11,8 +11,6 @@ app.add_middleware(
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
-    allow_origins=["https://jesus18112003.github.io/AoEDash/"],  # Tu URL de GitHub Pages
-    allow_methods=["GET"]
 )
 
 profile_ids = [287196, 2664846, 416330, 2251804, 273913, 5592920,
