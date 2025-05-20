@@ -1,4 +1,4 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Query
 from fastapi.middleware.cors import CORSMiddleware
 import requests
 import re
@@ -13,27 +13,26 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-profile_ids = [287196, 2664846, 416330, 2251804, 273913, 5592920,
-               4489862, 394760, 1663584, 10718686, 2542803, 3075586, 
-               10989132, 1790515, 5206099, 197388, 5825958, 4971]
-
 pattern = r"^.{1,2}\s{2}(.+?)\s\((\d+)\)\sRank\s#(\w+),.*?(\w+)%\swinrate"
 
 @app.get("/estadisticas")
-def obtener_estadisticas():
-    data = []
-    for pid in profile_ids:
-        url = f"https://data.aoe2companion.com/api/nightbot/rank?profile_id={pid}"
-        response = requests.get(url)
+def obtener_estadisticas(profile_id: int = Query(...)):  # Ahora recibe un ID por parámetro
+    url = f"https://data.aoe2companion.com/api/nightbot/rank?profile_id={profile_id}"
+    try:
+        response = requests.get(url, timeout=10)
+        response.raise_for_status()
         texto = response.text.strip().replace("\xa0", " ").strip('"')
         match = re.search(pattern, texto)
-        if match:
-            ranking = match.group(3)
-            winrate = match.group(4)
-            data.append({
-                "nombre": match.group(1),
-                "elo": int(match.group(2)),
-                "ranking": int(ranking) if ranking.isdigit() else None,
-                "winrate": int(winrate) if winrate.isdigit() else None
-            })
-    return data
+        
+        if not match:
+            return {"error": "No se encontraron datos para este ID"}
+            
+        ranking = match.group(3)
+        return {
+            "nombre": match.group(1),
+            "elo": int(match.group(2)),
+            "ranking": int(ranking) if ranking.isdigit() else None,
+            "winrate": int(match.group(4)) if match.group(4).isdigit() else None
+        }
+    except Exception as e:
+        return {"error": f"Error al obtener datos: {str(e)}"}
