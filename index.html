@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <title>Estadísticas AoE2</title>
     <style>
         body {
@@ -49,48 +50,107 @@
     <div id="stats-container" class="stats-container"></div>
 
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const container = document.getElementById('stats-container');
-            container.innerHTML = '<div class="loading">Cargando estadísticas...</div>';
-            
-            fetch('https://aoedash.onrender.com/estadisticas')
-                .then(response => {
-                    if (!response.ok) throw new Error('Error al cargar datos');
-                    return response.json();
-                })
-                .then(data => {
-                    container.innerHTML = '';
-                    
-                    data.forEach(player => {
-                        const card = document.createElement('div');
-                        card.className = 'player-card';
-                        card.innerHTML = `
-                            <div class="player-name">${player.nombre}</div>
-                            <div class="stat-row">
-                                <span>ID:</span>
-                                <span>${player.id}</span>
-                            </div>
-                            <div class="stat-row">
-                                <span>ELO:</span>
-                                <span class="elo">${player.elo}</span>
-                            </div>
-                            <div class="stat-row">
-                                <span>Rank Global:</span>
-                                <span class="ranking">${player.ranking || 'N/A'}</span>
-                            </div>
-                            <div class="stat-row">
-                                <span>Winrate:</span>
-                                <span class="winrate">${player.winrate}%</span>
-                            </div>
-                        `;
-                        container.appendChild(card);
-                    });
-                })
-                .catch(error => {
-                    container.innerHTML = `<div class="error">${error.message}</div>`;
-                    console.error('Error:', error);
-                });
+document.addEventListener('DOMContentLoaded', function () {
+    const container = document.getElementById('stats-container');
+    container.innerHTML = '<div class="loading">Cargando estadísticas...</div>';
+
+    fetch('https://aoedash.onrender.com/estadisticas')
+        .then(response => {
+            if (!response.ok) throw new Error('Error al cargar datos');
+            return response.json();
+        })
+        .then(data => {
+            container.innerHTML = '';
+
+            // Ordenar por ELO descendente
+            data.sort((a, b) => b.elo - a.elo);
+
+            // Crear contenedores
+            const chartsHTML = `
+                <canvas id="eloChart" height="100"></canvas>
+                <canvas id="winrateChart" height="100" style="margin-top: 40px;"></canvas>
+                <h2 style="margin-top: 40px;">Ranking de Jugadores por ELO</h2>
+                <table style="width: 100%; border-collapse: collapse; margin-top: 10px;">
+                    <thead>
+                        <tr style="background: #eee;">
+                            <th style="padding: 8px;">#</th>
+                            <th style="padding: 8px;">Nombre</th>
+                            <th style="padding: 8px;">ELO</th>
+                            <th style="padding: 8px;">Ranking</th>
+                            <th style="padding: 8px;">Winrate (%)</th>
+                        </tr>
+                    </thead>
+                    <tbody id="ranking-table-body"></tbody>
+                </table>
+            `;
+            container.innerHTML = chartsHTML;
+
+            // Rellenar tabla
+            const tbody = document.getElementById('ranking-table-body');
+            data.forEach((player, i) => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td style="padding: 8px; text-align: center;">${i + 1}</td>
+                    <td style="padding: 8px;">${player.nombre}</td>
+                    <td style="padding: 8px; text-align: center;">${player.elo}</td>
+                    <td style="padding: 8px; text-align: center;">${player.ranking ?? 'N/A'}</td>
+                    <td style="padding: 8px; text-align: center;">${player.winrate ?? 'N/A'}</td>
+                `;
+                tbody.appendChild(row);
+            });
+
+            // Chart: Top ELO
+            new Chart(document.getElementById('eloChart'), {
+                type: 'bar',
+                data: {
+                    labels: data.map(p => p.nombre),
+                    datasets: [{
+                        label: 'ELO',
+                        data: data.map(p => p.elo),
+                        backgroundColor: 'steelblue'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Comparativa de ELO',
+                            font: { size: 18 }
+                        }
+                    }
+                }
+            });
+
+            // Chart: Top Winrate
+            new Chart(document.getElementById('winrateChart'), {
+                type: 'bar',
+                data: {
+                    labels: data.map(p => p.nombre),
+                    datasets: [{
+                        label: 'Winrate (%)',
+                        data: data.map(p => p.winrate),
+                        backgroundColor: 'orange'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Comparativa de Winrate',
+                            font: { size: 18 }
+                        }
+                    }
+                }
+            });
+
+        })
+        .catch(error => {
+            container.innerHTML = `<div class="error">${error.message}</div>`;
+            console.error('Error:', error);
         });
-    </script>
+});
+</script>
 </body>
 </html>
