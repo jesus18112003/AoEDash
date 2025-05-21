@@ -9,33 +9,55 @@
             max-width: 1200px;
             margin: 0 auto;
             padding: 20px;
+            line-height: 1.6;
         }
-        .stats-container {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-            gap: 20px;
-        }
-        .player-card {
-            background: #f9f9f9;
+        
+        .section {
+            margin-bottom: 40px;
+            background: white;
+            padding: 20px;
             border-radius: 8px;
-            padding: 15px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
         }
-        .player-name {
+        
+        h1, h2 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+        }
+        
+        .chart-container {
+            position: relative;
+            height: 400px;
+            margin-bottom: 30px;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        th {
+            background-color: #f8f9fa;
             font-weight: bold;
-            font-size: 1.2em;
-            margin-bottom: 10px;
         }
-        .stat-row {
-            display: flex;
-            justify-content: space-between;
-            margin: 5px 0;
+        
+        tr:hover {
+            background-color: #f5f5f5;
         }
+        
         .loading {
             text-align: center;
             padding: 50px;
             font-size: 1.2em;
         }
+        
         .error {
             color: #d32f2f;
             background: #ffebee;
@@ -43,11 +65,17 @@
             border-radius: 8px;
             text-align: center;
         }
+        
+        .grid-container {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 30px;
+        }
     </style>
 </head>
 <body>
     <h1>Estadísticas de Jugadores AoE2</h1>
-    <div id="stats-container" class="stats-container"></div>
+    <div id="stats-container" class="grid-container"></div>
 
     <script>
 document.addEventListener('DOMContentLoaded', function () {
@@ -65,39 +93,84 @@ document.addEventListener('DOMContentLoaded', function () {
             // Ordenar por ELO descendente
             data.sort((a, b) => b.elo - a.elo);
 
-            // Crear contenedores
-            const chartsHTML = `
-                <canvas id="eloChart" height="100"></canvas>
-                <canvas id="winrateChart" height="100" style="margin-top: 40px;"></canvas>
-                <h2 style="margin-top: 40px;">Ranking de Jugadores por ELO</h2>
-                <table style="width: 100%; border-collapse: collapse; margin-top: 10px;">
+            // Sección de Gráfica de ELO
+            const eloSection = document.createElement('div');
+            eloSection.className = 'section';
+            eloSection.innerHTML = `
+                <h2>Comparativa de ELO</h2>
+                <div class="chart-container">
+                    <canvas id="eloChart"></canvas>
+                </div>
+            `;
+            container.appendChild(eloSection);
+
+            // Sección de Gráfica de Winrate
+            const winrateSection = document.createElement('div');
+            winrateSection.className = 'section';
+            winrateSection.innerHTML = `
+                <h2>Comparativa de Winrate</h2>
+                <div class="chart-container">
+                    <canvas id="winrateChart"></canvas>
+                </div>
+            `;
+            container.appendChild(winrateSection);
+
+            // Sección de Tabla
+            const tableSection = document.createElement('div');
+            tableSection.className = 'section';
+            tableSection.innerHTML = `
+                <h2>Ranking Completo</h2>
+                <table>
                     <thead>
-                        <tr style="background: #eee;">
-                            <th style="padding: 8px;">#</th>
-                            <th style="padding: 8px;">Nombre</th>
-                            <th style="padding: 8px;">ELO</th>
-                            <th style="padding: 8px;">Ranking</th>
-                            <th style="padding: 8px;">Winrate (%)</th>
+                        <tr>
+                            <th>#</th>
+                            <th>Nombre</th>
+                            <th>ELO</th>
+                            <th>Ranking</th>
+                            <th>Winrate (%)</th>
                         </tr>
                     </thead>
                     <tbody id="ranking-table-body"></tbody>
                 </table>
             `;
-            container.innerHTML = chartsHTML;
+            container.appendChild(tableSection);
 
             // Rellenar tabla
             const tbody = document.getElementById('ranking-table-body');
             data.forEach((player, i) => {
                 const row = document.createElement('tr');
                 row.innerHTML = `
-                    <td style="padding: 8px; text-align: center;">${i + 1}</td>
-                    <td style="padding: 8px;">${player.nombre}</td>
-                    <td style="padding: 8px; text-align: center;">${player.elo}</td>
-                    <td style="padding: 8px; text-align: center;">${player.ranking ?? 'N/A'}</td>
-                    <td style="padding: 8px; text-align: center;">${player.winrate ?? 'N/A'}</td>
+                    <td>${i + 1}</td>
+                    <td>${player.nombre}</td>
+                    <td>${player.elo}</td>
+                    <td>${player.ranking ?? 'N/A'}</td>
+                    <td>${player.winrate ?? 'N/A'}</td>
                 `;
                 tbody.appendChild(row);
             });
+
+            // Configuración común para gráficas
+            const chartOptions = {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: false
+                    }
+                },
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    tooltip: {
+                        mode: 'index',
+                        intersect: false
+                    }
+                },
+                animation: {
+                    duration: 1000
+                }
+            };
 
             // Chart: Top ELO
             new Chart(document.getElementById('eloChart'), {
@@ -105,18 +178,20 @@ document.addEventListener('DOMContentLoaded', function () {
                 data: {
                     labels: data.map(p => p.nombre),
                     datasets: [{
-                        label: 'ELO',
                         data: data.map(p => p.elo),
-                        backgroundColor: 'steelblue'
+                        backgroundColor: 'rgba(54, 162, 235, 0.7)',
+                        borderColor: 'rgba(54, 162, 235, 1)',
+                        borderWidth: 1
                     }]
                 },
                 options: {
-                    responsive: true,
+                    ...chartOptions,
                     plugins: {
+                        ...chartOptions.plugins,
                         title: {
                             display: true,
-                            text: 'Comparativa de ELO',
-                            font: { size: 18 }
+                            text: 'Distribución de ELO',
+                            font: { size: 16 }
                         }
                     }
                 }
@@ -128,18 +203,20 @@ document.addEventListener('DOMContentLoaded', function () {
                 data: {
                     labels: data.map(p => p.nombre),
                     datasets: [{
-                        label: 'Winrate (%)',
                         data: data.map(p => p.winrate),
-                        backgroundColor: 'orange'
+                        backgroundColor: 'rgba(255, 159, 64, 0.7)',
+                        borderColor: 'rgba(255, 159, 64, 1)',
+                        borderWidth: 1
                     }]
                 },
                 options: {
-                    responsive: true,
+                    ...chartOptions,
                     plugins: {
+                        ...chartOptions.plugins,
                         title: {
                             display: true,
-                            text: 'Comparativa de Winrate',
-                            font: { size: 18 }
+                            text: 'Distribución de Winrate',
+                            font: { size: 16 }
                         }
                     }
                 }
