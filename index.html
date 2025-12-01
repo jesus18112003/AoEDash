@@ -1,233 +1,524 @@
 <!DOCTYPE html>
-<html>
+<html lang="es">
 <head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>AoE2 - Dashboard Competitivo</title>
+
+  <!-- Chart.js CDN -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <title>Estadísticas AoE2</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 20px;
-            line-height: 1.6;
-        }
-        
-        .section {
-            margin-bottom: 40px;
-            background: white;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        }
-        
-        h1, h2 {
-            color: #2c3e50;
-            margin-bottom: 20px;
-        }
-        
-        .chart-container {
-            position: relative;
-            height: 400px;
-            margin-bottom: 30px;
-        }
-        
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 20px;
-        }
-        
-        th, td {
-            padding: 12px 15px;
-            text-align: left;
-            border-bottom: 1px solid #ddd;
-        }
-        
-        th {
-            background-color: #f8f9fa;
-            font-weight: bold;
-        }
-        
-        tr:hover {
-            background-color: #f5f5f5;
-        }
-        
-        .loading {
-            text-align: center;
-            padding: 50px;
-            font-size: 1.2em;
-        }
-        
-        .error {
-            color: #d32f2f;
-            background: #ffebee;
-            padding: 20px;
-            border-radius: 8px;
-            text-align: center;
-        }
-        
-        .grid-container {
-            display: grid;
-            grid-template-columns: 1fr;
-            gap: 30px;
-        }
-    </style>
+
+  <!-- Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=Cinzel:wght@400;700&display=swap" rel="stylesheet">
+
+  <style>
+    :root{
+      --bg: #05070a;
+      --panel: #0b0f14;
+      --muted: #9aa5b1;
+      --accent-cyan: #00d1ff;
+      --accent-blue: #0b78ff;
+      --accent-gold: #f2c94c;
+      --card-glass: rgba(255,255,255,0.03);
+      --soft-white: #e6eef6;
+      --radius: 14px;
+      --shadow: 0 10px 30px rgba(2,6,23,0.6);
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      font-family: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+      background: linear-gradient(180deg,#03060a 0%, #071325 60%);
+      color: var(--soft-white);
+      -webkit-font-smoothing:antialiased;
+      -moz-osx-font-smoothing:grayscale;
+      padding: 18px;
+    }
+
+    /* Layout */
+    .app {
+      display: grid;
+      grid-template-columns: 250px 1fr;
+      gap: 22px;
+      max-width: 1400px;
+      margin: 20px auto;
+      align-items:start;
+    }
+
+    /* SIDEBAR */
+    aside.sidebar{
+      background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+      border-radius: calc(var(--radius) + 6px);
+      padding: 20px;
+      border:1px solid rgba(255,255,255,0.04);
+      box-shadow: var(--shadow);
+      min-height: calc(100vh - 72px);
+      position: sticky;
+      top: 18px;
+    }
+    .brand{display:flex;gap:12px;align-items:center;margin-bottom:16px}
+    .logo{
+      width:46px;height:46px;border-radius:10px;display:flex;align-items:center;justify-content:center;
+      background: linear-gradient(135deg,var(--accent-cyan), var(--accent-blue));
+      font-family:"Cinzel",serif;color:#04121a;font-weight:700;
+      box-shadow: 0 8px 20px rgba(0,209,255,0.08);
+    }
+    .brand h3{margin:0;font-size:16px}
+    .brand p{margin:0;font-size:12px;color:var(--muted)}
+
+    .nav { display:flex;flex-direction:column;gap:8px;margin-top:12px }
+    .nav a{
+      display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:10px;
+      color:var(--soft-white);text-decoration:none;font-weight:600;font-size:13px;
+      transition: background .12s, transform .08s; border:1px solid transparent;
+    }
+    .nav a:hover{ background: rgba(255,255,255,0.02); transform:translateY(-2px) }
+    .nav a.active{
+      background: linear-gradient(90deg, rgba(0,209,255,0.08), rgba(11,120,255,0.06));
+      border:1px solid rgba(11,120,255,0.12);
+    }
+
+    .cta {
+      display:block;margin-top:18px;padding:12px;border-radius:10px;text-align:center;
+      background: linear-gradient(135deg,var(--accent-cyan),var(--accent-blue));
+      color:#04121a;font-weight:800;text-decoration:none;box-shadow:0 10px 24px rgba(0,209,255,0.08);
+    }
+
+    /* MAIN */
+    main.main{padding:6px 6px}
+    header.topbar{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px}
+
+    .search{display:flex;align-items:center;gap:10px;background:var(--card-glass);padding:10px 12px;border-radius:10px;border:1px solid rgba(255,255,255,0.03);min-width:420px}
+    .search input{background:transparent;border:0;color:var(--soft-white);outline:none;font-size:14px}
+
+    .user{display:flex;align-items:center;gap:12px}
+    .avatar{width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,var(--accent-gold), #ffd97f);display:flex;align-items:center;justify-content:center;color:#07101a;font-weight:800}
+
+    .period-select{background:var(--card-glass);padding:8px 12px;border-radius:10px;border:1px solid rgba(255,255,255,0.03);color:var(--soft-white);font-weight:600;cursor:pointer}
+
+    /* HEADLINE */
+    .headline{display:flex;align-items:end;justify-content:space-between;margin-bottom:16px;gap:12px}
+    .title h1{margin:0;font-family:"Cinzel",serif;font-size:26px;color:var(--accent-cyan);letter-spacing:0.6px}
+    .title p{margin:0;color:var(--muted);font-size:13px}
+
+    /* GRID */
+    .grid{display:grid;grid-template-columns:repeat(12,1fr);gap:14px}
+
+    .card{
+      background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+      border-radius:12px;padding:14px;border:1px solid rgba(255,255,255,0.03);
+      box-shadow: 0 8px 30px rgba(2,6,23,0.55);
+    }
+
+    .kpi{display:flex;justify-content:space-between;align-items:center;gap:12px}
+    .kpi .icon{width:52px;height:52px;border-radius:10px;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,var(--accent-cyan),var(--accent-blue));font-weight:800;color:#04121a}
+    .kpi .meta{color:var(--muted);font-size:13px}
+    .kpi .value{font-size:20px;font-weight:800;color:var(--soft-white)}
+
+    /* Charts layout: NOTE cambios para evitar reflow infinito */
+    .chart-large{grid-column:span 8; height:360px; overflow:hidden; position:relative;}
+    .chart-side{grid-column:span 4; display:flex; flex-direction:column; gap:12px; min-height:360px; position:relative;}
+
+    /* donut wrapper: area fija para evitar loops de reflow */
+    .donut-wrap { height: 150px; width:100%; position:relative; overflow:hidden; }
+
+    /* ensure canvas fills parent but doesn't cause layout jump */
+    .chart-canvas { width:100% !important; height:100% !important; display:block; }
+
+    /* small cards */
+    .small-cards{grid-column:span 12;display:flex;gap:12px;flex-wrap:wrap}
+    .small{background:var(--card-glass);padding:12px;border-radius:10px;flex:1 1 220px;border:1px solid rgba(255,255,255,0.03)}
+    .small .num{font-size:18px;font-weight:800}
+    .small .sub{color:var(--muted);font-size:12px;margin-top:6px}
+
+    /* table */
+    .table-wrap{grid-column:span 12;overflow:hidden;border-radius:12px;margin-top:6px}
+    table.full{width:100%;border-collapse:collapse;background:transparent}
+    table.full thead th{padding:12px 14px;text-align:left;color:var(--muted);font-size:13px;border-bottom:1px solid rgba(255,255,255,0.04)}
+    table.full tbody td{padding:12px 14px;border-bottom:1px solid rgba(255,255,255,0.03);font-size:14px;color:var(--soft-white)}
+    table.full tbody tr:hover{background: rgba(255,255,255,0.02)}
+
+    /* Responsive adjustments */
+    @media (max-width:1100px){
+      .app{grid-template-columns:1fr;padding:12px}
+      aside.sidebar{position:relative;min-height:auto;padding:10px;display:flex;flex-direction:row;gap:12px;overflow:auto}
+      .nav{flex-direction:row;gap:8px}
+      .chart-large,.chart-side{grid-column:span 12;height:300px}
+      .donut-wrap { height: 140px; }
+      .small-cards{flex-direction:column}
+    }
+  </style>
 </head>
 <body>
-    <h1>Estadísticas de Jugadores AoE2</h1>
-    <div id="stats-container" class="grid-container"></div>
+  <div class="app">
+    <!-- SIDEBAR -->
+    <aside class="sidebar" aria-label="Navegación principal">
+      <div class="brand">
+  <div class="logo">
+    <img src="logo.jpg" alt="Logo Team Invictus" style="width:100%; height:100%; border-radius:10px; object-fit:cover;">
+  </div>
+  <div>
+    <h3>Boar Slayers</h3>
+    <p>RTS Stats Hub</p>
+  </div>
+</div>
 
-    <script>
-document.addEventListener('DOMContentLoaded', function () {
-    const container = document.getElementById('stats-container');
-    container.innerHTML = '<div class="loading">Cargando estadísticas...</div>';
+      <nav class="nav" role="navigation" aria-label="Secciones">
+        <a href="#" class="active">Overview</a>
+        <a href="#">Players</a>
+        <a href="#">Matches</a>
+        <a href="#">Civilizations</a>
+        <a href="#">Analytics</a>
+      </nav>
 
-    fetch('https://aoedash.onrender.com/estadisticas')
-        .then(response => {
-            if (!response.ok) throw new Error('Error al cargar datos');
-            return response.json();
-        })
+      <a class="cta" href="#" title="Crear partida">Crear partida + Bonos</a>
+    </aside>
+
+    <!-- MAIN -->
+    <main class="main">
+     <header class="topbar">
+  <div style="display:flex;gap:12px;align-items:center;justify-content:flex-start;flex-wrap:wrap">
+    <!-- Buscador -->
+    <div class="search" role="search">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+        <path d="M21 21l-4.35-4.35" stroke="white" stroke-opacity="0.7" stroke-width="1.6" stroke-linecap="round"/>
+      </svg>
+      <input id="quick-search" placeholder="Buscar jugador, mapa o civ..." aria-label="Buscar">
+    </div>
+
+    <!-- Selector de periodo -->
+    <div id="periodBtn" class="period-select">Última semana ▾</div>
+  </div>
+</header>
+
+      <section class="headline">
+        <div class="title">
+          <h1>Competitive Hub — Age of Empires II</h1>
+          <p>RTS Analytics • Visual híbrido (E-sport + Medieval)</p>
+        </div>
+
+        <div style="display:flex;gap:12px;align-items:center">
+          <div class="card" style="padding:10px 14px;border-radius:10px;border:1px solid rgba(255,255,255,0.03)">
+            <div style="font-size:12px;color:var(--muted)">Promedio ELO</div>
+            <div id="avgElo" style="font-weight:800;font-size:18px;color:var(--accent-cyan)">—</div>
+          </div>
+
+          <div class="card" style="padding:10px 14px;border-radius:10px;border:1px solid rgba(255,255,255,0.03)">
+            <div style="font-size:12px;color:var(--muted)">Promedio Winrate</div>
+            <div id="avgWR" style="font-weight:800;font-size:18px;color:var(--accent-blue)">—</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- GRID -->
+      <div class="grid">
+
+        <!-- ELO chart (large) -->
+        <div class="card chart-large">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+            <div style="font-weight:800">Comparativa de ELO</div>
+            <div style="font-size:13px;color:var(--muted)">Top jugadores (ordenado por ELO)</div>
+          </div>
+          <div style="height:100%; width:100%; position:relative;">
+            <canvas id="eloChart" class="chart-canvas"></canvas>
+          </div>
+        </div>
+
+        <!-- Side charts -->
+        <div class="card chart-side">
+          <div style="flex:1;display:flex;flex-direction:column">
+            <div style="display:flex;align-items:center;justify-content:space-between">
+              <div style="font-weight:800">Comparativa de Winrate</div>
+              <div style="font-size:12px;color:var(--muted)">Por jugador</div>
+            </div>
+            <div style="flex:1;margin-top:8px; position:relative; height:170px;">
+              <canvas id="winrateChart" class="chart-canvas"></canvas>
+            </div>
+          </div>
+
+          <div style="display:flex;align-items:center;gap:12px">
+            <div style="flex:1">
+              <div style="font-weight:800">Distribución de ELO</div>
+              <div style="font-size:12px;color:var(--muted)">Jugadores por rango</div>
+
+              <!-- DONUT WRAPPER con altura fija para evitar reflow infinito -->
+              <div class="donut-wrap" aria-hidden="false">
+                <canvas id="eloDonut" class="chart-canvas"></canvas>
+              </div>
+
+            </div>
+          </div>
+        </div>
+
+        <!-- Small KPIs -->
+        <div class="small-cards card" style="grid-column:span 12">
+          <div class="small">
+            <div style="display:flex;justify-content:space-between;align-items:center">
+              <div>
+                <div class="num" id="totalPlayers">—</div>
+                <div class="sub">Jugadores totales</div>
+              </div>
+              <div style="font-weight:700;color:var(--accent-cyan)">ELO</div>
+            </div>
+          </div>
+
+          <div class="small">
+            <div style="display:flex;justify-content:space-between;align-items:center">
+              <div>
+                <div class="num" id="topPlayer">—</div>
+                <div class="sub">Top jugador (nombre)</div>
+              </div>
+              <div style="font-weight:700;color:var(--accent-gold)">TOP</div>
+            </div>
+          </div>
+
+          <div class="small">
+            <div style="display:flex;justify-content:space-between;align-items:center">
+              <div>
+                <div class="num" id="medianElo">—</div>
+                <div class="sub">ELO mediano</div>
+              </div>
+              <div style="font-weight:700;color:var(--muted)">RTS</div>
+            </div>
+          </div>
+
+          <div class="small">
+            <div style="display:flex;justify-content:space-between;align-items:center">
+              <div>
+                <div class="num" id="playersAbove2k">—</div>
+                <div class="sub">Jugadores ≥ 2000 ELO</div>
+              </div>
+              <div style="font-weight:700;color:var(--muted)">Competitivos</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Ranking table -->
+        <div class="table-wrap card" style="grid-column:span 12">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+            <div style="font-weight:800">Ranking Completo</div>
+            <div style="font-size:13px;color:var(--muted)">Ordenado por ELO</div>
+          </div>
+          <div style="overflow:auto;max-height:420px;padding-right:6px">
+            <table class="full" id="rankingTable" aria-label="Tabla de ranking">
+              <thead>
+                <tr>
+                  <th style="width:48px">#</th>
+                  <th>Nombre</th>
+                  <th style="width:110px">ELO</th>
+                  <th style="width:110px">Ranking</th>
+                  <th style="width:120px">Winrate (%)</th>
+                </tr>
+              </thead>
+              <tbody id="rankingBody">
+                <tr><td colspan="5" style="text-align:center;color:var(--muted);padding:28px">Cargando datos...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+    </main>
+  </div>
+
+  <script>
+    // Variables globales para destruir instancias previas
+    let eloChart = null;
+    let winrateChart = null;
+    let donutChart = null;
+
+    // Helpers
+    const fmt = n => (n===null||n===undefined) ? 'N/A' : String(n);
+    const truncate = (s, len=18) => !s ? '' : (s.length>len ? s.slice(0,len-1)+'…' : s);
+    const escapeHtml = unsafe => String(unsafe)
+      .replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'",'&#039;');
+
+    document.addEventListener('DOMContentLoaded', () => {
+      // Elements
+      const avgEloEl = document.getElementById('avgElo');
+      const avgWREl  = document.getElementById('avgWR');
+      const totalPlayersEl = document.getElementById('totalPlayers');
+      const topPlayerEl = document.getElementById('topPlayer');
+      const medianEloEl = document.getElementById('medianElo');
+      const playersAbove2kEl = document.getElementById('playersAbove2k');
+      const rankingBody = document.getElementById('rankingBody');
+
+      const eloCtx = document.getElementById('eloChart').getContext('2d');
+      const wrCtx  = document.getElementById('winrateChart').getContext('2d');
+      const donutCtx= document.getElementById('eloDonut').getContext('2d');
+
+      // Fetch data from backend (ruta absoluta usada antes; cámbiala si necesitas localhost)
+      fetch('https://aoedash.onrender.com/estadisticas')
+        .then(r => { if(!r.ok) throw new Error('Error al cargar datos'); return r.json(); })
         .then(data => {
-            container.innerHTML = '';
+          if(!Array.isArray(data) || data.length === 0){
+            rankingBody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--muted);padding:28px">No hay datos disponibles</td></tr>';
+            avgEloEl.textContent = 'N/A'; avgWREl.textContent='N/A';
+            return;
+          }
 
-            // Ordenar por ELO descendente
-            data.sort((a, b) => b.elo - a.elo);
+          // Normalize
+          data = data.map(p => ({
+            nombre: p.nombre ?? 'Anon',
+            elo: Number(p.elo) || 0,
+            ranking: p.ranking ?? 'N/A',
+            winrate: (p.winrate !== undefined && p.winrate !== null) ? Number(p.winrate) : null
+          }));
 
-            // Sección de Gráfica de ELO
-            const eloSection = document.createElement('div');
-            eloSection.className = 'section';
-            eloSection.innerHTML = `
-                <h2>Comparativa de ELO</h2>
-                <div class="chart-container">
-                    <canvas id="eloChart"></canvas>
-                </div>
+          // Sort by ELO desc
+          data.sort((a,b) => b.elo - a.elo);
+
+          // KPIs
+          const totalPlayers = data.length;
+          const avgElo = Math.round(data.reduce((s,p)=>s+p.elo,0)/totalPlayers);
+          const validWR = data.filter(p=>p.winrate!==null).map(p=>p.winrate);
+          const avgWR = validWR.length ? (Math.round((validWR.reduce((s,v)=>s+v,0)/validWR.length)*10)/10) : 'N/A';
+          const medianElo = (() => {
+            const arr = data.map(d=>d.elo).sort((a,b)=>a-b);
+            const mid = Math.floor(arr.length/2);
+            return arr.length % 2 ? arr[mid] : Math.round((arr[mid-1]+arr[mid])/2);
+          })();
+          const playersAbove2k = data.filter(p => p.elo >= 2000).length;
+          const topPlayer = data[0]?.nombre ?? 'N/A';
+
+          avgEloEl.textContent = avgElo;
+          avgWREl.textContent = (avgWR === 'N/A') ? 'N/A' : avgWR + '%';
+          totalPlayersEl.textContent = totalPlayers;
+          topPlayerEl.textContent = truncate(topPlayer, 22);
+          medianEloEl.textContent = medianElo;
+          playersAbove2kEl.textContent = playersAbove2k; // <-- CORRECTO
+
+          // Fill table
+          rankingBody.innerHTML = '';
+          data.forEach((p,i) => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+              <td style="font-weight:700;color:var(--accent-gold)">${i+1}</td>
+              <td>${escapeHtml(p.nombre)}</td>
+              <td style="font-weight:700;color:var(--accent-cyan)">${p.elo}</td>
+              <td>${fmt(p.ranking)}</td>
+              <td>${p.winrate===null ? 'N/A' : p.winrate + '%'}</td>
             `;
-            container.appendChild(eloSection);
+            rankingBody.appendChild(tr);
+          });
 
-            // Sección de Gráfica de Winrate
-            const winrateSection = document.createElement('div');
-            winrateSection.className = 'section';
-            winrateSection.innerHTML = `
-                <h2>Comparativa de Winrate</h2>
-                <div class="chart-container">
-                    <canvas id="winrateChart"></canvas>
-                </div>
-            `;
-            container.appendChild(winrateSection);
+          // Prepare chart data
+          const topN = Math.min(20, data.length);
+          const labels = data.slice(0,topN).map(d => truncate(d.nombre,18));
+          const eloValues = data.slice(0,topN).map(d => d.elo);
+          const winValues = data.slice(0,topN).map(d => d.winrate===null ? 0 : d.winrate);
 
-            // Sección de Tabla
-            const tableSection = document.createElement('div');
-            tableSection.className = 'section';
-            tableSection.innerHTML = `
-                <h2>Ranking Completo</h2>
-                <table>
-                    <thead>
-                        <tr>
-                            <th>#</th>
-                            <th>Nombre</th>
-                            <th>ELO</th>
-                            <th>Ranking</th>
-                            <th>Winrate (%)</th>
-                        </tr>
-                    </thead>
-                    <tbody id="ranking-table-body"></tbody>
-                </table>
-            `;
-            container.appendChild(tableSection);
+          // Destroy previous charts if exist (important to avoid duplicated canvases/instances)
+          if (eloChart) { eloChart.destroy(); eloChart = null; }
+          if (winrateChart) { winrateChart.destroy(); winrateChart = null; }
+          if (donutChart) { donutChart.destroy(); donutChart = null; }
 
-            // Rellenar tabla
-            const tbody = document.getElementById('ranking-table-body');
-            data.forEach((player, i) => {
-                const row = document.createElement('tr');
-                row.innerHTML = `
-                    <td>${i + 1}</td>
-                    <td>${player.nombre}</td>
-                    <td>${player.elo}</td>
-                    <td>${player.ranking ?? 'N/A'}</td>
-                    <td>${player.winrate ?? 'N/A'}</td>
-                `;
-                tbody.appendChild(row);
-            });
+          // Gradients
+          const eloGrad = eloCtx.createLinearGradient(0,0,0,300);
+          eloGrad.addColorStop(0, 'rgba(0,209,255,0.95)');
+          eloGrad.addColorStop(1, 'rgba(11,120,255,0.28)');
 
-            // Configuración común para gráficas
-            const chartOptions = {
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: {
-                    y: {
-                        beginAtZero: false
-                    }
-                },
-                plugins: {
-                    legend: {
-                        display: false
-                    },
-                    tooltip: {
-                        mode: 'index',
-                        intersect: false
-                    }
-                },
-                animation: {
-                    duration: 1000
-                }
-            };
+          const wrGrad = wrCtx.createLinearGradient(0,0,0,200);
+          wrGrad.addColorStop(0, 'rgba(11,120,255,0.95)');
+          wrGrad.addColorStop(1, 'rgba(0,209,255,0.18)');
 
-            // Chart: Top ELO
-            new Chart(document.getElementById('eloChart'), {
-                type: 'bar',
-                data: {
-                    labels: data.map(p => p.nombre),
-                    datasets: [{
-                        data: data.map(p => p.elo),
-                        backgroundColor: 'rgba(54, 162, 235, 0.7)',
-                        borderColor: 'rgba(54, 162, 235, 1)',
-                        borderWidth: 1
-                    }]
-                },
-                options: {
-                    ...chartOptions,
-                    plugins: {
-                        ...chartOptions.plugins,
-                        title: {
-                            display: true,
-                            text: 'Distribución de ELO',
-                            font: { size: 16 }
-                        }
-                    }
-                }
-            });
+          // ELO bar chart
+          eloChart = new Chart(eloCtx, {
+            type: 'bar',
+            data: {
+              labels,
+              datasets: [{
+                data: eloValues,
+                backgroundColor: eloGrad,
+                borderColor: 'rgba(11,120,255,0.95)',
+                borderWidth: 1,
+                borderRadius: 6,
+                barPercentage: 0.8
+              }]
+            },
+            options: {
+              responsive:true,
+              maintainAspectRatio:false,
+              plugins:{ legend:{display:false}, tooltip:{mode:'index',intersect:false} },
+              scales:{
+                x:{ ticks:{ color: 'rgba(230,238,246,0.9)' }, grid:{ display:false } },
+                y:{ beginAtZero:true, ticks:{ color:'rgba(230,238,246,0.9)' }, grid:{ color:'rgba(255,255,255,0.03)' } }
+              }
+            }
+          });
 
-            // Chart: Top Winrate
-            new Chart(document.getElementById('winrateChart'), {
-                type: 'bar',
-                data: {
-                    labels: data.map(p => p.nombre),
-                    datasets: [{
-                        data: data.map(p => p.winrate),
-                        backgroundColor: 'rgba(255, 159, 64, 0.7)',
-                        borderColor: 'rgba(255, 159, 64, 1)',
-                        borderWidth: 1
-                    }]
-                },
-                options: {
-                    ...chartOptions,
-                    plugins: {
-                        ...chartOptions.plugins,
-                        title: {
-                            display: true,
-                            text: 'Distribución de Winrate',
-                            font: { size: 16 }
-                        }
-                    }
-                }
-            });
+          // Winrate bar chart
+          winrateChart = new Chart(wrCtx, {
+            type:'bar',
+            data:{ labels, datasets:[{
+              data: winValues,
+              backgroundColor: wrGrad,
+              borderColor: 'rgba(0,209,255,0.95)',
+              borderWidth:1, borderRadius:6, barPercentage:0.6
+            }]},
+            options:{
+              responsive:true,
+              maintainAspectRatio:false,
+              plugins:{ legend:{display:false}, tooltip:{callbacks:{label: ctx => ctx.parsed.y + '%'}} },
+              scales:{ x:{ display:false }, y:{ beginAtZero:true, max:100, ticks:{ color:'rgba(230,238,246,0.9)' }, grid:{ color:'rgba(255,255,255,0.03)' } } }
+            }
+          });
+
+          // Donut: ELO brackets (this used the fixed .donut-wrap to avoid reflow)
+          const brackets = [
+            {label:'<1000', min:-Infinity, max:999},
+            {label:'1000-1299', min:1000, max:1299},
+            {label:'1300-1599', min:1300, max:1599},
+            {label:'1600-1899', min:1600, max:1899},
+            {label:'1900-2199', min:1900, max:2199},
+            {label:'2200+', min:2200, max:Infinity}
+          ];
+          const counts = brackets.map(b => data.filter(d => d.elo >= b.min && d.elo <= b.max).length);
+          const donutColors = [
+            'rgba(255,255,255,0.08)',
+            'rgba(0,209,255,0.95)',
+            'rgba(11,120,255,0.9)',
+            'rgba(0,173,140,0.9)',
+            'rgba(242,201,76,0.95)',
+            'rgba(226,59,59,0.9)'
+          ];
+
+          // create donut inside fixed wrapper; maintainAspectRatio: false so it fits wrapper
+          donutChart = new Chart(donutCtx, {
+            type:'doughnut',
+            data:{ labels: brackets.map(b=>b.label), datasets:[{ data: counts, backgroundColor: donutColors, hoverOffset:6 }]},
+            options:{
+              responsive:true,
+              maintainAspectRatio:false,
+              plugins:{ legend:{ position:'right', labels:{ color:'rgba(230,238,246,0.95)' } } },
+              cutout:'60%'
+            }
+          });
 
         })
-        .catch(error => {
-            container.innerHTML = `<div class="error">${error.message}</div>`;
-            console.error('Error:', error);
+        .catch(err => {
+          console.error('Fetch error:', err);
+          const rankingBody = document.getElementById('rankingBody');
+          rankingBody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--muted);padding:28px">Error cargando datos</td></tr>';
+          document.getElementById('avgElo').textContent = 'N/A';
+          document.getElementById('avgWR').textContent = 'N/A';
         });
-});
-</script>
+
+      // Quick-search: simple client-side filter (search by name)
+      const searchInput = document.getElementById('quick-search');
+      searchInput.addEventListener('input', (e) => {
+        const q = e.target.value.trim().toLowerCase();
+        const rows = document.querySelectorAll('#rankingBody tr');
+        if(!rows) return;
+        rows.forEach(r => {
+          const nameCell = r.children[1];
+          if(!nameCell) return;
+          const name = nameCell.textContent.toLowerCase();
+          r.style.display = (!q || name.includes(q)) ? '' : 'none';
+        });
+      });
+    });
+  </script>
 </body>
 </html>
