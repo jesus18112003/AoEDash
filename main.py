@@ -26,7 +26,7 @@ HEADERS = {
 profile_ids = [21613744, 74521, 6774025, 21625064, 21640454, 21601763, 10383990, 21757962, 20604423, 22257462, 16244914, 17445170]
 
 # Patrón de expresión regular para **Nombre** (ELO) Rank #Ranking, ... Winrate%
-pattern = r"\*\*(.*?)\*\* \((\d+)\)\sRank\s#(\d+),.*?(\d+)%"
+pattern = r"(.+?)\s\((\d+)\)\sRank\s#(\d+).*?(\d+)%\swinrate"
 
 def fetch_player_stats(pid):
     """
