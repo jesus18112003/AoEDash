@@ -42,7 +42,7 @@ La información se visualiza en:
 
 ## 👨‍💻 Autor
 
-Proyecto desarrollado por **Jaziel Carballo**  
-Última actualización: **Mayo 2025**
+Proyecto desarrollado por Jesus Cabello
+Última actualización: **Diciembre 2025**
 
 ---
